@@ -1,37 +1,14 @@
-## Welcome to GitHub Pages
-
-You can use the [editor on GitHub](https://github.com/sev3d/sev3d.github.io/edit/main/index.md) to maintain and preview the content for your website in Markdown files.
-
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/sev3d/sev3d.github.io/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+<div id="viewer"
+    data-kbmax
+    data-configurator-id="345"
+    data-show-header="false"
+    data-show-drawer="false"
+    data-show-move="false"
+    data-bind-to-form=""
+    data-load-style="none"
+    style="height: 800px;">
+    <a href="http://www.kbmax.com/" style="position: absolute; right: 20px; bottom: 20px; width: 12%;">
+        <img src="http://kbmax.kbmax.com/images/kbmax_logo_horizontal.png" alt= "3D Product Configurator by Epicor CPQ" style="max-height: 108px; height: auto; width: 100%;" />
+    </a>
+</div>
+<script src="https://kpark-dev.kbmax.com/embed.min.js"></script>
