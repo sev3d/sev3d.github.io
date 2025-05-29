@@ -616,7 +616,7 @@
         }
       });
 
-      const renderedAlbums = await promisePool(tasks, 10); // 10 requêtes en parallèle
+      const renderedAlbums = await promisePool(tasks, 20); // 10 requêtes en parallèle
       container.innerHTML += renderedAlbums.join('');
       currentIndex += PAGE_SIZE;
       isLoading = false;
