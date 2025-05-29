@@ -322,7 +322,9 @@
     }
 
     document.getElementById('login-btn').onclick = function() {
-      authenticate().then(displayAlbums);
+  authenticate()
+    .then(loadClient)      // Ajoute ceci !
+    .then(displayAlbums);
     };
 
     // Chargement de l'API Google
