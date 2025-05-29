@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Afficher certains albums Google Photos</title>
+  <style>
+    .album { display: inline-block; margin: 20px; text-align: center; }
+    .album img { width: 200px; height: 200px; object-fit: cover; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Mes albums sélectionnés</h1>
+  <button id="login-btn">Se connecter à Google Photos</button>
+  <div id="albums"></div>
+
+  <script>
+    // Renseigne ici ton client_id Google Cloud
+    const CLIENT_ID = '499061564187-gr1idc5pere5r74lspgcd3f8hcsaglps.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/photoslibrary.readonly';
+
+    // Liste des IDs d'albums à afficher (remplace par tes propres IDs)
+    const SELECTED_ALBUM_IDS = [
+      'ADVbyXMSG1XWKIKfBKmIIkqUWsUpOlDlzEIR7ySOTU3xohuyoadQzMzHWRJX8Lz6YnZCTUesKChE', // Madame Loyal Mai 2025
+      'ADVbyXNRpFQDRMLx6Dlty3r2b3q0W6EjILMUyLsEfB-mCh5ntue_QqfFRwFDJFCZOf1AE_HqE9q3', // Madame Loyal Mai 2025 selection
+      'ADVbyXM9WpjZ282Y4Xn98q5QAV_-U4BKAoZbt2Smf6gSgmEui5yfpFE19dLY5nENsm8Vx7Z6_aiQ', // Sévan
+      'ADVbyXMTazuVNI5HpowUHiUJlcDRShZUTYFTpOaYvHIPLKsZYpicv5qId7wWlxNFDjZKTjUskDIo', // Méliné
+      'ADVbyXPJkFIkoHDw5Re-bnDtiKImytjmYr5J7uigoKZ9xV0YQw3mYqNcOK_f2-IXEdtQzG0NCniL', // Cool
+      'ADVbyXNEf0HtXsTJvlc8OkWfaMJlNZYJ5vxtaqR_h-BPUlK5dZjC1QirKPm98oWuxgxJ6yhZ8ivI', // Paris 2025
+      'ADVbyXPekFjePeLQLbNvCwbN4TLcvxysYmT9ifwaZch3lkeqfROCtpzSAQHhhxyc7ix0bcyl9jp1', // Anniversaire Alice 2025
+      'ADVbyXO7IABrnD_Ohu_EA7CBNRsF63lkZjGx1Zv4TR5zPvsCd_5qwcYEFmTkR9x9VXvBjWyhs5NA', // Bar
+      'ADVbyXNDJeVsLKVxNb1h3uDJN5koPL1IxG9Y4aNC7T9SyIVaTDr9arVKtzqR5CVIOQjlIzE9LWMQ', // Anniversaire Rémy 2025
+      'ADVbyXPdhvOKcXOo08F9Q_LOqCiSqc2d85hAOJJbrYj9351FZDONeOfa2Mlkl8JelTta90pGY2pB', // Soirée chez Thomas et Photo CV Lola
+      'ADVbyXMIkdlCSg9GwvMBSPuUCJkHLKk0E-hxxAGubMH4aH-SilE0vl1sJk6KbHjGiyW4mWQfgfe6', // Manifestation 1er Mai 2025
+      'ADVbyXPQ44xLkN3WWkB7zFz3PY2ZbC7Nzbj2bybiaMgRQf0uU32LiCs0jF-36DfUaLHRBSoOkHkK', // Cool 2
+      'ADVbyXO9OyYMnGQtOwVGD3UvnOz5mjgBTLgdpLmiIyFOZGIQzbcsOBHUSgei0vVKiRBZCvWd7hyx', // Opening Jardin club 2025 all
+      'ADVbyXOa2ea-uIhzHwd5j1w-NUrfIcUEoVhBD4CJyryYTUVy37xeJkP7UNKsUNdndE6heLeCmptZ', // Opening Jardin club 2025 selection
+      'ADVbyXMJleassiE7n1yUPQf4Y9Mgj-x9XDm6ywlccwYh-TxZHSAzGYZsDWTIH6IBwZzrc1wgtdPm', // 2025 Mad Jacques Avril all
+      'ADVbyXP4_D_jKz-xWSIaTdUy4t--4TZS0YT0-OOfOPh4W2NUpA_ns_OioLRD4d5DmLmIhIHPErcP', // Mad Jacques Avril 2025 selection
+      'ADVbyXPjo0bQKD9L9i8N_U4VKPIWucWv1w3vYpl7rc4qjOhXOv_axV9vz6qAyYZopZ68GZWJpW2c', // Soirée chez Angel et Morgane
+      'ADVbyXOZXtt0DGjPvt-blOkrzlbe4Tgdm21EimcwyC2r5SPw23X-bFlF9UTyOiHBlCjBIvgsXeab', // Madame Loyal XXL all
+      'ADVbyXNAsh1iynxm4r8U43n60AsaMTeyGoGC_SaMr1jFJEKAUc0CfAM-iINvWOzHNgiQZA62bZnV', // Madame Loyal XXL Selection
+      'ADVbyXNipcxaLHLlX3oJezEFRaot70LbJmeeKXoijY3zrcv1LkSBN3efNdFd6lh6hsEvKkxontUE', // Soirée chez Mathilde et Xavier
+      'ADVbyXNCcYNb-62Lqlb97gdsG8KJsHSQjkhFB4Josn6DYICGc4jwBzqBOGeoppFdQ8XJvYkoxtZx', // La barrique
+      'ADVbyXOs8KfzBGboBcAx_Uu0KVQL-VMqQwpeEqFV-dZvAK4dSIPplLUTn5ZpzQUKK3iUWwlLJhYE', // Anniversaire Marine et Baptiste 2025
+      'ADVbyXNLdRzUaGSe9hxdT748VLJJl0rKHjCL9Jpw0oLqzF-NdJKVgWTyicEBjRexyEa4KYPmfTEa', // Nouvel An 2025
+      'ADVbyXPrlQCtvwoOrenWr8u6VE-ttaj0CtIK1CkR9ngJEy3l8EhOvDC2KSntR0KSsov7HRwthabt', // Peisey valandry
+      'ADVbyXNHICIEGUo_8ZFzPLbbrOjnmJBEF29DGgaYugW_g6qdYEOn-9jRtg1zZbcn9uK219qtShrS', // Mad Jacques 2024 all
+      'ADVbyXNeTcVz75QoeJlOPKd-Zf5Yj15b0O7rAuyEh1MGqthNp3tLcVWcwGDj6KH9u6vAUiNAqaP9', // 2709
+      'ADVbyXN4U8E9Vtue7lI4OPUtcxsSFCbPj-L85eTCDONvpRZecvJY5gwz90kGcAKWTX6DKoG-dXxT', // Ariane
+      'ADVbyXMh8VwX8HnXRTHxJmTXYdgiHQJp6ySXO0CRjaCFLTkeJDIBfBOt3LQkEF2jabwY8-_F3Pai', // Mad Jacques Décembre 2024
+      'ADVbyXMDPe7Yn4wUddrhw6v5EaZcvfEp5pAfvxdbwTIEHVEXL7BFnU02ZWFM_CP6n5KQi6ikCzsJ', // Pascaline
+      'ADVbyXPhFJDIkhDY-YbyEUknz5ApsLeUgEJiCvuhIBF3wqyfQe6OQBx1ezaX5ihsNySWGr5ppsM1', // Soirée chez Allan 2
+      'ADVbyXMyKMJcgh6gH3RVmAqQeUu9kbQLfqPTZqEhdyNbSNleRVQuN6030Th6oLJJek6VQXve3YKv', // Anniversaire Manon 2024
+      'ADVbyXOwHLQAH888CrjoHckbweB_tIobIg0AokfmJqy9sq-m72PVclGOXgO0mbwrULXo8LjiyXDL', // Corse 2024
+      'ADVbyXMvRjIdb8iFgKqfSnNBsUs5s8fVvhQTCUSAuw5u3olCuxZMtSL847UzB0EzPlm3Ftpk7jqH', // Hatchi
+      'ADVbyXO3nipUnXpo8tbWawQyoBuUxt5wl0jIIuJ1x9cO9Xr-LCMBL59DrrlVxIWqgFAFYpNDvC1Q', // Course Voiture
+      'ADVbyXOwbLmwQ_AcbpCd-YhVzJ5al25tOLZY3t3yK52o0nw4cWHDf3sj1q7K6mtTCenxEQf1GoSu', // Anniversaire Jessica 2024
+      'ADVbyXOrCzBFfGZlpbZIyfquRQTBo7EEmvtaAU-uKnf0P3-MlpHEyF485qOxM-UOB7lZ046Nq59C', // Manifestation
+      'ADVbyXNjZLg9K-67v01A50fl4ujCK2_TeglbOg93-RsOErAL_38C0tY-bd9keew_BdUnmUZc6Tgl', // Fête de l'humanité 2024 selection
+      'ADVbyXP88jzbHukg3EUfnELSl_MICl1lxWF5u8pZb53rjIPm3Tt-RnyHwL0zjvewawUJ7EqXx1qa', // Fête de l'humanité 2024 all
+      'ADVbyXOlv6GkQiANbmWixoVzWBeDasy_dnyccJrxbFg_WV9bMHfnYCU7NeCXBJQblZBtSbj5SfWy', // Anniversaire Lola 2024
+      'ADVbyXOgnZa5535uGxTGBTCH9m49rbfMRvuhVogWo6q9NXejb6Gf_43hv9Ivj7OhvQAHKav0l7TI', // Anniversaire Élia 2024
+      'ADVbyXNtOeU3wNGwaJT6Py1Jgkgyvy-0FsMksah801SkRLSY_2t51Y9Hha2KZVzEADvvfGE2tt7e', // Anniversaire Mathilde 2024
+      'ADVbyXMv_o8_k0YxbmodLKRnZLHHoUQ5QSiyj_lMGJ7b6GMqDiL3KRYbS5rdUPmpZRlbtBmsS7dd', // Jeux Olympiques 2024
+      'ADVbyXOWWwvP7y44QfU0hueaIeOyunXdjb1O8Rrf0ke9Z7a4dEYhzm_4aZe1MTpfFTRKwEqDB7PL', // Notting Hill Catnival 2024
+      'ADVbyXNeJ_C2i8CP7WH9FtzI8XvbW1NGWveM2ZbSBkr6-u_60vlkIiXmBW3Qg7bNNrJrSxlW_wmt', // Soirée chez Sévan
+      'ADVbyXPU60H1KvDhpoLj6bFH7hiJbmDq5TTBWaH6Gq2Yl3XGB0LTAXdNSimrDGaGWKjNQnxcTEC1', // Festif L'Art 2024 all
+      'ADVbyXOhj1ULHRKfnJNZG3PRvs3XjgwIr48V4hse3ohHesYjnN8tDnp3KcWg0AZxxLEFKkIH7-Ke', // Festif L'Art 2024 selection
+      'ADVbyXP6qyegzOMemi-jBM7_QlcTmw4NVZPJMy9xJ1euEeI2N33N-SJqpV-aZLqEKSXl3GMArfYO', // Festif L'Art 2024 perso
+      'ADVbyXMG_tqcQYJbGFd5_vlLo0qadC7bLrexysKhmLtgHyqeu7XF5-PI5jmYrrY3q-9hqbs5TcUt', // Fête de la musique 2024
+      'ADVbyXMkGRNL4cPRPVQIP_eo1evxnwyXqxgPPpLe8Glq30SpsNOwbrpaoUjdLSF-HaaLD1zcdjFh', // EPK 2024 all
+      'ADVbyXMnOVwaHiSpDl5Ovfz6W8sEBwNvqldeFj9CuamRKFFziZZCmBZEcpuikcqnd0bNx-oBm_1j', // EPK 2024 perso
+      'ADVbyXPldtpqV87nFTk5kHqEGhLFu0cRcKhFU8alrkbEegaR9sAnw11eM2S10IQfDPS14r1bpJ_H', // EPK 2024 selection
+      'ADVbyXNdRGSDwGN0egEvIGxp1R9gZ4N6s1kZEgSHL_2xJSOslqk1GJiQUQKzOs0CV96d6E-bMkQp', // We Love Green 2024 all
+      'ADVbyXMNXBSifXsGMFwoL_C-0XjgIcs_KAcWnLY0PhA0YdG6Sz1mba2x7AySrqDnShViA1ClH9rO', // We Love Green 2024 selection
+      'ADVbyXO91uW5SFl_NtwYi0u4jpjsVhahQmY9Mee2SPFrfIQY0DtD1AOZlc5FAr0-h-TdFeiX8VSL', // Marvelous 2024 all
+      'ADVbyXNpO3om1scE2vz-1WKYoJ5k30cLmCxjjELHnn5Cfb6v_iup_fF1N_og6KOnMYgYKIMYpLRd', // Marvelous 2024 selection
+      'ADVbyXP0fvDmSn6J9FRTQJHYqp6ugAg4KetjseepGZHg0dKffYEbHK5wI7kybAPC5O2hP4hrzQYc', // Marvelous 2024 perso
+      'ADVbyXNjW137V8HIvyW8sHCMk_F5by-t08_JzKz1dqopwhCgwbknBFxDoEr1ccUldA7ciZqfZbVy', // Alexandre et Marie
+      'ADVbyXNnZpbPtVnaXqMO-rFjKsRy-Pwd1JtQ-fPG4aWM3Qx43y1OkrMyLNrImrNXUqYU7NiVUI5r', // Soirée chez Remy
+      'ADVbyXOoowVlNx-6hal4UyfXg4oSeb2W2HNpAjHcSwRpY68wq-F-kqVIx8jyOk5l3c3rGBHN2VpP', // Sortie Random 2024
+      'ADVbyXN0pHF6PdMNV6IC3udo7sZxFr-lijB3pNjxfJBLZwOs9XlZCSsuVu6UAl634MiToUtvEDUV', // Art
+      'ADVbyXPVyZubK6FdcsM1E3kuMLrUTcVH5ByHCXyn7cOMVDDGf5RHl4TlVopYSgZQP30zwr3cIZSt', // Déménagement Lionel
+      'ADVbyXNPlmAmr0nnSZapCEANfNT-9GcwvTG5PeNcJC68v6lfIK6xcdMTQ6jRF6lo5Zr73MkxLygG', // Déménagement Corse 2024
+      'ADVbyXM6CnAmhEswMu_7Kc3sGFaBH-pwbPnAuHeW5gV8i4vQS3PYcgpvgalqfdMsa7hL3zNLqfYo', // Sonar Red Alert
+      'ADVbyXPhZUV7agGWpa64lL0HaQzhvNN9hxedspjyE4VlH6bH4jaBDy5TbjjaglK3YuYCf32_b82f', // Anniversaire Lionel 2024
+      'ADVbyXMqZuqrS4p1-15O9sqlUQjcxd7ulKC_EUrRi9lhItmNsH_ANHK9WtAOtqKhCZvSV62rusL9', // Le Grand Bornand 2024
+      'ADVbyXMMh9ksROLHvMdX70UGdSL33llCnn1i7uZBa8NzZCGB5aAktjbncaVLB7WPLd7BWGbjgLF3', // Soirée chez Alexandre
+      'ADVbyXNvpAbG98wtFulfEfp3EPGGpKTaXG--U-cBY3fKphhMF2RFy4_1sS3TXH0Vb3_K9uzpqOyp', // Sortie a Paris
+      'ADVbyXNQt7fAKsMwtf9ksC5ley9JGTwm5V3xQAFQ1Yzdh5xCsxiDCrnhAmFMrHY9f5iCjjZPOhpm', // Anniversaire Lévon et Julien 2024
+      'ADVbyXMIm14OOLk1aPWtABNsVzbC8qhrBSI6ZR3sv7q-l6oAONBGVeWZLJF4sZJo2y_GcF-dZw9_', // Nouvel an 2024
+      'ADVbyXOeWpq-iIi5ySqt8g8qFMmrRTJFmhaAGCIYV8r6D5gD_uTB3_Sxl983noCUnxMp4jMooQ-i', // Valmeinier 1800 2023
+      'ADVbyXMvYNvfGm8wyWxU8M-_8p2vBw8y9MqlNNg27eT_5R6-Q3_HaAG2DwC0SDcd2HrrD-kzH9Ae', // Valmeinier all
+      'ADVbyXNKt4Gcv0QYlsLYxtN7qgeV0bi7ssD9lZUr0q3r72dHbaVTctqo54SdOC6uvUlPjlreSjFc', // Valmeinier selection
+      'ADVbyXMsijxz-J8uYJ5kmtevCnICACkQn-VtoxLut1udwGAK79qxmGyHU91StQVoMRda7T3egLt5', // Nicaragua Miami 2023
+      'ADVbyXOUjf5m7dvk7QVRvO4oMRW8ysziIGrrjqpOmoFmF0gSDHt9rZVvE0QqLvQbMS6JfzZoh0NL', // Miami Selection
+      'ADVbyXNdr_g8tf7r9iEa3ySEDeUnw0oPmp2wtyu9JIXb0CHZvdyPbDNrMA7rSuMBmP-PBEhcONs-', // Nicaragua Selection
+      'ADVbyXPkoKLt69kyEW6qxRu4ZZm2fIDeD8qejwloy21uEozNNoqn1qB6Iw9z-fhhvui_-bc3sFT4', // Soirée chez Karlito
+      'ADVbyXMShReTh6gd7E6Doo4ZMO7XXEPB1bnQYPt6FbDYJRG4UTw6pqLzH4ZVSDrmXFkwXyFoTUpv', // Anniversaire Alexis et Caroline 2023
+      'ADVbyXOWuR3ghjVyEs6PMgo4FHaaaHz5vDSOaeSapMYKo8YQCC5MzNZXpLV2Gk_ELGfRjmMINQaH', // Soirée Chez Allan
+      'ADVbyXMmJhr4dp931ck28z6_J9xnY7unVHouD4dgcXvV_PSBGcG3MprmjLOXfsTgMLa-eQkxPyvr', // Soirée chez Julien
+      'ADVbyXMOqYnvmhjDxaIfwO6prFShw_bE_g5JiCG8-OlGaZ71Jq19fjHD1378DhTV8JcG4gCQBG8-', // Anniversaire Manon 2023
+      'ADVbyXNQ3tk5Zzs8c7fYVB29L0c7Sc5Vd99JZeW6WHlzuupkr76qu6YDHHccoT5_kr269Kn7iXPG', // Anniversaire Lola 2023
+      'ADVbyXOsyLFs4B8tqJv9Q8VEUDSj9LlneMYMPaOLXzn7MrTWvcCVosgqpDVWc2uszWurVrY_Xpbd', // Soirée chez Alan Ls
+      'ADVbyXOFdcqhT_Eofb357sy_ySiO0SLgBT2WElGXKg1L6QT2qlmVkQtILP1WfqswjJy4dguqIEiT', // Anniversaire Yoann
+      'ADVbyXMqJk21yQoIydfCECwwVXpOO_dXOeRsPRwyKnr-MMLM1XLuDZgj9LyiZrEjSZ_Zn8hV-6aq', // Activité en tout genre
+      'ADVbyXN2O4Z8_rMzmDeYtAgLlV61IhSu2oanQrOER2X6bL-yUv2Sqf1Yf4Rm4GH3rVQKnFVefo7o', // Soirée Chez Caro
+      'ADVbyXOCVmaTJVdNxBtSfCId_9gel5aMa-W9kG2XXz0LY50dghffTecCWtVGM-jCf8tk-rsw05Rg', // C'est Sympa de danser
+      'ADVbyXPr31WiTVplfiUco2zppx7DFQKsBDbhXqZcJFDdarUCCpDZqy4A65_aSjjH2e0SuiPgwVID', // Fête de l'humanité 2023
+      'ADVbyXN2A1MefN0RBkX-5xCdAZGydk2Rxz6dvLTiJkHnss9t1RNiLMgaOiM47DR1IdXspJpnSqAL', // Fête de l'Humanité 2023 selection
+      'ADVbyXPCYGISyS50KPA9Kb4RGz5rL4tnhxuLIsi5HPvYYs6fW99x-hTF0yV22Dm4-K_C1eQ86FQg', // Soirée chez Alice
+      'ADVbyXMheQePaXo9ZVlxe2FXbRrPkV-rUhXK8koumH8cQXd9HQF88MJHDLzoqvsrBQVU4qqx-eFJ', // EPK 2023 all
+      'ADVbyXMQ3-YlDwMYbTksVe9um5ZrUZs1N_fRF2QU-yK4b6pkbIBm5LYZiiJgJKEhmzky4nmHKKo8', // EPK 2023 selection
+      'ADVbyXMbj07BlkKlXkvVa8oVmLtYW-0IPKg-K2jJtrPYH9pAw1-Dm_AIYdSiJiQedzK8GK6_-l0k', // ITCelerator
+      'ADVbyXOreoMI4p_ZPeRn8KALYSneDiALcxZC3xtrM8bzEmZQ90bCD-OLt3dSZZX7zfb2inoty8M8', // Anniversaire Mathilde 2023
+      'ADVbyXOHtTWCkXSZchKktu9dfuVUMayS0mvcL56Di4Ui5wmpHhCdWKuT6_-jaa360appla5dp6HH', // Soirée chez l'oncle
+      'ADVbyXPpHjFXz0a_zkcOXVv1EPT6NLhA-Gyyhmf1hm_Pcjv0Yd8cSm8ynlai7yxLyUt9OWotUE9F', // Soirée Chez Angel
+      'ADVbyXNr9v58nDxuWPhCfYeQjjdrp3ARU5AeRCALdSL1vzw8_SmEslr4htOKeQ8WjJCjXFvWCqxs', // Soirée chez Lévon
+      'ADVbyXMXfhi7nlMP5NhmvYbUrzJtVhvgoOH8c4h5ArWZvEjFRBTY1-orLTnZLJwq5_taN6wmlVy9', // Corse 2023
+      'ADVbyXM4-DVJ0Q7p9cvwFhOe8CkNhrsK0H2KeGXAHTj6CjdV5Jl_Ja3S478EX3ITHiGonePiOJI0', // Festifl'art 2023 all
+      'ADVbyXNXMP2w9qNzUWzUobivYFTuUS-PrZ25r0jd-B-7pg8pcLhxP_wnISM_sXOxwDhBLN_cKQDW', // Festifl'art 2023
+      'ADVbyXOA9cQcsOdISV15UVYfyQxBQVwUojZAjzyg_XFdrw7afhTO9EpI6dFkb0MCCn8v2XWdWR9r', // Festifl'art 2023 Perso
+      'ADVbyXMePgZ1HmFq7J8X1U6P32oqcAVg1veq6Ot9dRge4vtFJsGh-0G4mlI58CcK5U3XFJvvluaP', // Pépélé  festival 2023 all
+      'ADVbyXMHYPVZBJulpu-uwwRy9mxmNsBs4zqQ6rwULgMvG7Xb8HbxRWkHdAmo-zD-8SeDPforVO0R', // Pépélé Festival 2023
+      'ADVbyXPT948UYTOfA035bYoMpwPVvNgrJAZ2qAGFlCEQ4PONFAjMkGY_sJdsaJm0vmHk18po7rpX', // Balade Paris
+      'ADVbyXOc5JKWL-KCUkjgsvpDagfAmDJYlVqUh8bfVgoe6Nr8vEx74BbzDdxSuQ1SmiJ5eF0YJniz', // Soirée chez Gwen et Gaëtan
+      'ADVbyXOtMc1WVo7e1D4HT6i6fH4f5z4T9Cd9JMNxuF-7fMaXMuH85UlbXUrCTCEahn_B3MAvciNl', // Anniversaire Gaëtan 2023
+      'ADVbyXOatFQBxg0VvFDPcJPWiHmHuO7F9M7gow6DXzYyx4fJuNGxN1snAj49D-Gg1dDg6m_tATi_', // Fête de la musique 2023
+      'ADVbyXO6D4-GkNF0U7Q5GcVyGzjq0MCd5zkChu0j3ZfXiI9oylmdELjqXT4ZWmCxzFtXOahkjaya', // Fête de la musique 2023
+      'ADVbyXMVxJ2ZyqUpMxW73IYObKbzZ7KFsZoXWpqq8VKPtgKRmXnkHjOz-_gPcw56UqQceZEYzM6d', // Anniversaire Méliné et Lionel
+      'ADVbyXPbCKiAYz3ZGbo-ZHAlK9MXBkvKa9JyMb2e-4C3dtSVrDAS9B3vvwyPiZYvoJxNYMe59A93', // Soirée chez Alexis
+      'ADVbyXM6PD__awrdNRzI5CNGEbJmBvrp0DNj6UzqvISGpz9Ap9Gzz2FFlpTYxK-bBuZUT8exR4t1', // We Love Green 2023
+      'ADVbyXObinYJG5KfxGLnvz8Hy_dy2kntsR_a24rtUSw2ZMQb6bDgjxUIRh6J3GN-2oh3Jfg7ptjM', // We Love Green Selection
+      'ADVbyXP_g2NaGkGn1TeaSki4ugGKjdfPeBd2z_U8jk5loKWh2Y5EkEuOELucVXepXo87GbgdFgNb', // We Love Green Perso
+      'ADVbyXOINUVdXwzYzmiduOOWqFYU0HnYlLhmO42PlmlpyBQ_PuTdzuCE_fWg8nyFvCkZMiwTRY8J', // Marvelous 2023
+      'ADVbyXOSjOKBev05NSzqYWyKcb5C8R95YKHQXZYKvBwmD-ZOtqSN3JUGxp2QJYpJz2cUwXpfeIx2', // Marvelous 2023 selection
+      'ADVbyXO1aGpRpxSgyZoS84GHzLU-k9I0-T9HlfNNrBpKRS4jjMxjJzMIX004h3isHW1FccnSQhRo', // Marvelous perso 2023
+      'ADVbyXOOaqWc-xlJkFXZDfk6qrjYXvfdDr9eXvliY9YykBdwEIq4HPyYspgIzmvYN9G_ESpLcYFH', // Anniversaire Louise
+      'ADVbyXM55XwlF2IDxfxo03CK77xoQxskv_kSRwdAyeiphznDmzlvH9Ctez8tfIpdMBT8Y80QkS0x', // Manifestation pour les retraites
+      'ADVbyXNHzMWFwjYMdL6nCxhanKjHOOc7DM4_FKMSBwpDPhOk7AfI8HPcDgGE7cssctKOsvJiKY-p', // Vatan
+      'ADVbyXM3Qe9EIANNRpbQzJhhxIEuJ85KsOBdw_cJFIlBWs7RayaFfIG_0q0VeO7Mvqi1tRMXBPCv', // Normalement futur photo de CV
+      'ADVbyXOj8ang5TdImObk40Lz7inrVOt8yODuNih8p-Ou0tTxqRlLoaFw1875pW2ECydOSzAyXTp5', // 1er Avril
+      'ADVbyXP6BAYVKPBHNIqsr9CnkzOn0NXs9vqtcDFBkBFkd4WjjT2P6CPeg-Qoqp7nzCL387HN03cJ', // Valières
+      'ADVbyXNTKvllLYGDUKm2L4cv8VrqAmeSY1IYb-c7mK51cOA0_6RpweYTkfTOJ2cUmNX7sYGyyT8U', // Soirée chez Thomas
+      'ADVbyXOY9j8awMAYJMlKOz1LXBeKiMvPqNvzCnHtVf1LxqWw6vTUsPAVR0xr78Ub5J7_0LOln5sY', // Super-Besse 2023
+      'ADVbyXNwjFnpdHEW4geY2wZeI8oadXWXtiRb2y9EaIgGuG8ce8YHIrp8TQPlz3b4v4PhX1X9gzdl', // Super Besse Cool
+      'ADVbyXN8C6Yp34j5WMjUs9plJ6ZQQVoCf7OOUQu3kU4KiLoGT8ytnAbG8xjCX6qUPukl6Zqr-qcj', // VVF super besse
+      'ADVbyXOPoyZlPq0eTDg3WKmyncSHdzjQxxOkjoHFwGOG2tiVAeHBRbv0hvq-2MyYPY_Z-sSOmTUq', // Moto
+      'ADVbyXNo_uwseIw5uTOw25j5rtQ_Rmgm1CZo9wTs6Ca7l_oMbD5Uy_7mJ1tuW9dyS0z5hsVXjzIG', // Soirée chez Victor
+      'ADVbyXPx6Tr6F9402YKD38VyZnm8o6immv-u3R17yKdCuen4Fe6QqKbaiZPidAZ3UVbh-7V_VP42', // Roller Hockey
+      'ADVbyXNAqoD6CpQoQpXoI6LrVWvJgz30zLV6t6_yJNKIchGFn6WLWp0HmInIDxmMtViKKcGPCv_3', // Soirée Casino ensa
+      'ADVbyXOpDDPP0081-TIfCViNKh0GjOhFJAYcHLkJdnuNlT2R_Z5pp9cNbvppgpt2osoxOej9U3-J', // Soirée Casino ensa all
+      'ADVbyXPTwLX8fqx1U6sc1BklS2t0IIeoAa9Th_pTPnEy4dCTcTjeIi3egyp0R0fV-QPmD1xAvP2B', // Soirée Casino selection
+      'ADVbyXP1RvcNQMPNOOl4m140V42UBCHXRy4-JZglqxbfXsOn45-iiKcguNZmJdDarEfHV0aoJYF_', // Soirées chez Yannis
+      'ADVbyXNFWGreiQzN69PRzUAR4T5_V25-O2VQhanvE1x1MUwPl1fGj_L69IFmlqNiqw-AZxUuU7J8', // Nouvel an 2023
+      'ADVbyXN5SUIniz3SsJ63Xkv89XXPHcBxXkBDSKNg_cJxvNIUkkXqlbiRwFnRgTjT3jVrchsy5wvT', // Nouvel an Valières 2023
+      'ADVbyXNSn0LPTfTm14w5gzs0IwnN3j9Sv7Wd_ltk8GPjBsnL-ftcL-C0fd_v5t50Z-u4R5TVhOjX', // Anniversaire Thomas 2022
+      'ADVbyXPSWmDeggc39O9BeX7NowQ1VyeofYjYTB55UyQ4wMzYJ2skW8pkvoXtLa5OItZLZcuDE5hJ', // Anniversaire Caro
+      'ADVbyXMauzWFEeYf53VC0UC8GcNqbgVaLCkzrlJnsDPgOwdcHS3P8BeHRrTxMDqms9vhzOVHhYFm', // Soirée chez Nico
+      'ADVbyXOXOT61PI61UIxGxFUhGZemAUHVPI5QyK4PHigQDsNaOt0O123P9EgIClYYxrehqICaxfF5', // Soirée chez Raph
+      'ADVbyXPzz9PSsluANBo95jQ7tcmN-xv1tmEKHT6dRv7yv9YutnR6aN4c7i9vxrrfIr1DDHDR9ZJc', // Anniversaire Fabrice
+      'ADVbyXNVJzaow1BcSyiv3woRF-hAXNVlDMD5q-yMBAwSZXhG6UVMVSml7GFVuBNDakQ-6hOMR56V', // Anniversaire Lola 2022
+      'ADVbyXOhMxcKyArF1DDpcrZme7YxIsiMUEk_3CofYBXdpncfhAjXHwic2BNhwtCPMXAAweaB4YN3', // Soirées Chez Lola
+      'ADVbyXMinPs4aY6ejLQSUg5D-K-UeIA3LJY8kqLG-vdPCJwMVGWQIWhajW2zmUxFpFJdt6T8bM82', // Anniversaire Max
+      'ADVbyXPMkzNZg2QH2oaN0tXj5gprvR1WZPNOv72-arqsG2tDEHICJPWHh2q1HxON2dJJ6vnx1Uts', // Madagascar
+      'ADVbyXN0xzXXd1GzzymA3PJAdxO4MiaONniw5AN5EgYjvqwzyOU6kGXB4yzI-4jQJIbqLlHn3CFc', // nuit blanche 2022
+      'ADVbyXNGq-58D88rLetJEGELhfLWmlEDoVfKC_KjgjiXPRT1m_nXVepKmAVL7zkJwjLZjgH2sB5x', // Techno parade 2022
+      'ADVbyXOUWEIlwD3spmnzOv0nnQPZwLb5io0wNsVu0tNoqBcXtn1npTcyCcrBCdnxBqB6T8q6yY5m', // Dream nation 2022
+      'ADVbyXM5aTt08qHhqkWy1tMRPnyi1NFlgwjXmMcbIJhAEqpGmIvsCJJJ1aG8rpbxukaavFdbNDDv', // Dream nation 2022 all
+      'ADVbyXM5kdgN6nUscsQazvmTld-8dnuZ3Yq7xtO5suvZaLW_lGAPJdKD3wRDNR7FKyTgBscQVYYC', // Dream nation perso 2022
+      'ADVbyXO_7uaopqzwOw3kKXPz9a_WiKIQWm16_PRGLsNGJ-PBRNG2-cx73fsR20vjt6c3Of9S0oyn', // Fête de l'humanité 2022 all
+      'ADVbyXPMlGZuWlWqTpg6YdADez17V_oyytdV8h088NrRMq0YwNpdU0in3tq-RyU6KIkmgPDT4vuf', // Fête de l'humanité 2022 selection
+      'ADVbyXOJD_NjcJnKFrvkjQkAKnWaUbvQGvYwZxnZtnc0EdnNKg_qwtN3NcyFyal_bpUdQ08azD6o', // Fête de l'humanité 2022 perso
+      'ADVbyXNreQDYsda4aaesL0v21cKXYJeAEQDkEADiKcH24nZkvRRHksd_UrAPeidttZ9AwBurSlu-', // EPK 2022 all
+      'ADVbyXOYkDpkvEcVbKd_KsqQw-66zTbARuGWNo_YaXjkxkMZmhP0eMq_Hd_QsFv1WIiPJCZdHgkf', // EPK 2022 selection
+      'ADVbyXP20hJtK7VfMuGotQjmHZct7NYpR4DxfdqvNrKlxEDF145CJncfZ6B-Ldrt0MIWMhnETBgR', // EPK 2022
+      'ADVbyXMAP-9qU36UF3OVYhxAqCBxPDlk_k6fqm9Kl3xXA723pb1rp1v_d6NdeVfX2s-ZqH24kQCh', // Corse 2022
+      'ADVbyXN_uWFEdcP0Jyn3va0FolujV809OoSmv206WGsK9W7n-Wpdgc2fIYaVnglR4w8pFsVoXY61', // La bellevilloise
+      'ADVbyXPAkj8TTtNGEqjplGatpC48lRX5J6fLF51b6mwXdrpUbSDBHjB0b9FAB9Y1lDVeRUSyc194', // Rue de lappe
+      'ADVbyXP8IaDc8_WQX4kd8RUkx8x20nwLQ_vOG0wr-18vX3FGwss5zXf_4fAiR_ZQ1QCxQGpMiFyX', // Le Froggy
+      'ADVbyXMxkGs0zl0meX1yLKbjSbJxd2fXKF3zO2fE1TsaLCsqxGQMgaDukHE0k3ThE5JuURI7O43W', // Vacances Saint-Geours-de-Maremne 2022
+      'ADVbyXMg1sM8YRfte9WWklaYWq6sIjsZS4BumK-E2PxWkUfgM0-pAR3RhCUYQah6zG_URtt6qpxa', // Vacances Saint-Geours-de-Maremne
+      'ADVbyXP7lY5nvEAPKz2dGuyBldXbno80iXKBKx8FW8TR_lZfdVTKZm0AAwah7jsexJfNLl7Ucr7T', // Bayonne 2022
+      'ADVbyXNlJ65qFBnrQSkp6k9DNdUHZvmRr0GlPLYJDgEkD5zs_LWPGOuSx4d-Lflul4yhfb0S3Qba', // Fêtes de Bayonne 2022
+      'ADVbyXOcd7G8hqeaCy7jCWTlUxlbCukslLIhkp4qVgAfJ7SRB_umWLIXwWHFzt80uNg66KoMhcgE', // Lisa
+      'ADVbyXOt_6sleeh3vswugAD3g38pgn2wGVgEj10tkHtmbE3quOPEfmvi-Tj5bI7cwKG6pE1blaGJ', // Anniversaire Mathilde
+      'ADVbyXNkS8tbupRGckqpI67jjskWaXEFUFsKmbd2oJbJDberOOkTgfeqJ3ajsHBpSdgk5Eub3GYs', // Café oz
+      'ADVbyXP6QjYLBRHsZxbWi8YEfFi6ipZD88RgrhZyFdJ6PBVrZ4fQcswRa-xV1kreaqhJmERJSr4I', // Bal des pompiers 2022 all
+      'ADVbyXPOah6FDnvnlb5ylQk-0ulYzT8AqbhTYr45iDNrzigYA9MeLj_14kBVlnd87Veu5-41ZmI7', // Bal des pompiers 2022
+      'ADVbyXPBek45omxIt2b7CpPqX6jPuGf_Ci46-4t3PsE_wO0YZR4Ujoss52o8wUN9HmQ4nGH2Le8v', // Astérix
+      'ADVbyXNsG_xqVhtDFN5NMvYn3hGk-0wyU1YdkewfOFrA6zsHx9pOYIDfwALuYbuT0CzmAaoxnPZ5', // Festifl'art 2022 all
+      'ADVbyXOw4KJkM9EXfTLyKavL9-hx3UeAgN9i0GY9jlLUoor4XYXNml08esGa4au4Xbxph69SRB_N', // Soirée chez Élia
+      'ADVbyXOolej0R86EYtgouf9Ql41uE7W-TT7VlwgBZtDcFEmo69L8Wsrric29Lk8T2-uGCxTYFyKj', // Selection
+      'ADVbyXMsT03FznEXrlPQkTLvvcW69Ovw5VOiphG3BulqpCaT52svlOxO5fHW4JHc99nZnD1B_ZUD', // Soul'ocean selection
+      'ADVbyXPJkEhqXgpn7dOujHGBOo9tj-KJ4rxGiNc0SIv8PzYb5_2D2YExiHlUXO8mHGCgqRYo1FwL', // Soul'ocean 2022
+      'ADVbyXPF4Ed8pOE6kRHKNy2gWRJAHWn2DLDfHf1YTdWW4DjjUoWaVAptpS14dTDjVMq2JIcMPsf1', // Soul'ocean all
+      'ADVbyXNcrr-RRYjTSJYCgoJ8WOfT3i-aZHJvldZSLuc1b02rczuUuEcvQlFFvRPhSDvHGLjS-I7S', // We love green 2022
+      'ADVbyXP-WbCD0QOYgD4t-zsyw_1MG-W7l8zVuXfPbZIfB3jzP-_PMmNKJcFx6jN2YsHs5gmhm_9p', // Soirée chez Méliné
+      'ADVbyXNFGtdxc6AcfhyUXQF2tWN5aElFshiYl73KcJDrI4rbqLb8olNcWHhC-YU_apDIrI3Oq9L4', // Soirée chez Sandra (enfin barbeuc pour l'instant)
+      'ADVbyXPlA80eHwnPT9SaWbfPIR1m2NGfIhSD4mdlqbD20Z_3T5MJvN6U9qkAAjiW3cMs3yPba5dA', // Soirée chez Nico
+      'ADVbyXPM7h7CpL5nmNKin8Natt7xM8pKo4B_Q4Hjbf1ZRj7arL8sAeXqKaIyLYd7VPsxLNdFNj10', // Anniversaire Remy
+      'ADVbyXODvI-2ipfEj9D-O_U-aWkF6s5ft7xR85E0KtT-tLAiiRaKToGHS8Lc9DGIV2ZRPlmIuBVY', // Thaïlande
+      'ADVbyXMlY1fODi1VtkchUGimuyykMxF1_6Pc46vt0F-Si3kK-QeV8aXWX-GoElhuuc1GSrxVQkvG', // Thaïlande all
+      'ADVbyXNDd_yCHse1jApMJcwu5UvpDObvLLZVAi6DGrJ4RPeMgz6oi0H33f9LrBNeg_pCLh1Mss6U', // Thaïlande selection
+      'ADVbyXNHAO2RrDEl_prVQLlUBCkf_Ei-H9CuoDde0PNWomKlIkq51SaAbGUbWTzikEbAMuY2FsM3', // French kiss all
+      'ADVbyXO9Qh4Est2Kt6JZmMYYgLeQ8sNfrG-ys0_9MfmrxCPX2_W1DLs5oxTO7kW31XP3k21Yqx_V', // French kiss 2022
+      'ADVbyXOL3XCP4KDepkJ1-aSKCxmurx0wV7w-W59gWDWhuc1n9o50O6_MO8UM7_iJx2cXVa-ViyW_', // Déménagement Lola
+      'ADVbyXOABe0rgQBEle8l6-tPguyhgmsbLYNnkGUz1Y9VlUXFXeZVrsTxThJQZzE62zffYKXAgypq', // La vie en couleur all
+      'ADVbyXNvsgW_fRAlUBDpondchFmlWluedYvq-6qn46e1556nuqHSackN46fH004TBpPav9ZDvW8M', // La vie en couleur
+      'ADVbyXN4ExOpUKGwDkeY7wtsjez5Rvd94TxPLe-mJEN3Y2jLv5zjx4X-MJZfAa-XuxkplJkHL7uG', // Enfant Party II all
+      'ADVbyXOUp3xkPJ3McrOKoItFSbPVepWSZr197UpQua-oq3u0zSVIJ8oA7mhPm_ObTj8dubMTVGoy', // Enfant Party II
+      'ADVbyXM2HhzaxGdp0Tgp3XQ91P4fg3_JIdswKMr4uK3RAml-S2q1uslKKNOW_8YC6R_Kk0MiaNvR', // Marche 6eme république
+      'ADVbyXNyg1S3NqIp5ce8A8zf7N5tLPWEE60ylvTufxmxSbikW9RG2XfBJZZn_c5Z4s7jfJ0eWtvN', // Glazart all
+      'ADVbyXMiTifLY5usTFaSORxFk6mdEUyox809fi3m2udObL6uDGyWBvZuADD8EU0xaUAZ5trXyvJC', // Born to Rave 19/03/22
+      'ADVbyXMCgZVz4fWGldJwQYBARhYRJiE8IYL1DoxFuSPPDFQZjyrIsRxjdtBm5UIctDQDeuh17aiH', // St Patrick 2022
+      'ADVbyXNetY3Q_I9OWKWHx7O6JVM2_bExyWINOv8XU7L7_sygiBZorgm_wmMK_emi4lilMJRqJaGV', // Le Nexus
+      'ADVbyXMtzwEC2uUFCUAT2atbjuIjes7s-JTjVO-gZysJz3WfSQs3dgULwOcbNk01nwcP-N-TbDVf', // Drop in bass Nexus
+      'ADVbyXN5ISKkZLQUh4twCmWq0-GgecY4hEm9bp9ZXIqZQ-HfyKgD32xhYif2LeMoDzNaexudxkKc', // Soirée chez Armand et Lucile
+      'ADVbyXPXpoYjfd3JHu6wAgiZELRWzbFX9mqLDMFv5KeztLNXl1riyvlNCxZULgxTxNwlOfwiDMB9', // Possession rungis
+      'ADVbyXMPDdEm_mZz-0ghCVafZ99Hu7S6SBN5FlKkT4NfPBPzWgA_-l5inlOWRXRfxpVHoveKlq-C', // Le tambour à vapeur
+      'ADVbyXOcc3nixGgBm2991bOqeTEhmdBkcyaXhtDIaBb3o1PVofJHMdA5j3wZ5DWn7CJM_KMKpo6U', // 30 ans de Léo
+      'ADVbyXNpUSYGz3EWYANM6o1J12rIN5_VqZnkzvitDaBUYgbzWQV4Js7aIyq5a56miGomtsC8kRpc', // Val Claret 2022
+      'ADVbyXNCX7z7hkpxVawUw0fjBjzlnt0FseBoaKRi1rJnj2Zxx_6eYqNb8OsDAn0Sg9pZbyaGwXoV', // Soirée chez Melvin
+      'ADVbyXMJcl2n4LQQYhOGEO8LNcVjfi3xZx2GmcLk8bpjUGjOf1AhlB2JcF7HxxwiOeayowOM8Jv-', // Soirée chez Alice
+      'ADVbyXPJANyDLAh-IPQ2lsbp2fWiLzPXc2FgDRw9EsRjFO-sdIT9pMf3EwoyM3Hv3k8fqeWgJxaK', // Anniv Alain
+      'ADVbyXMVDin5OyugfJQSEhb0gpecCFxtELZZLnEH3K3dosEEFCYb9sbkDWl13Gl4J0ZYk7W5VXFM', // Nouvel an 2021
+      'ADVbyXNdJ5yecOH3ds-E4XY9wSb6vJUiMpINANkLvPdLvlzjxintC9SraIpJ0FVgOy27SMzWJ5d9', // Glazart
+      'ADVbyXMrDrMGbWNKt5StxOOGcrzHlFoThcWPf9xu5H5Ln0DDeRachHGDouaylSCblaKYjhuvMqWG', // legoff steven
+      'ADVbyXMIdcCyE-RZm_PZS8F5Av6X6s9JFFC3lErnUtaSSRB0HNypMKetWYlyEYW_eFYBE2IefpUC', // Anniversaire Lola Et Elia
+      'ADVbyXM1XUVbWEpFuYQ_hdb6zDL7c7kd80jh9WuI7QshA-GCylSdrBtcTIsLCO5_4pTP1gKFbtM2', // Urbex
+      'ADVbyXOyFYVIm2PHHvXGFOPdB1URCw4B0dMPtnccbBlnRFupgv1wzZv8Te6gNIMe81PSR6a6hl8b', // Les quais
+      'ADVbyXOco97_GEBXg4itjMkFX4UpLiuYd5mV4cuyRbTJ8uPKCpHweRk4nc_1WWVbtG7H2EMn4qPW', // Fedwa
+      'ADVbyXNnAJbHaJkoBQuC8WSK_oxtIW5Ohrfc8Zq-D5JdXYUp8urd6X9euBLwDMj7gVtNOEjqff0e', // Fête de L'humanité 2021 all
+      'ADVbyXPxCSnqJSLOCwrDl3aAMafSEb9K1lK0HFxIREmf74HRVNhgAuL-Ue_ud5jDvoBS4Hc_03EA', // Fête de l'Humanité 2021
+      'ADVbyXOVB11Cd-g5UEP_8CoeBw9f0ObY5ossUL9m8SwWDUjZ-EdwWTWikuaBISW10Ckjo7SIhgNw', // KT Gorique
+      'ADVbyXPao5V0uC9-1S3CFjobd79w9aQU-boSG9nNI47xq7oyo59wi_rxdKYZ1WtiskRooheycse-', // Elektric Park Festival
+      'ADVbyXMPLIaMULtL9dfYC3rzVgalI66Npb7PueBqjWsk041eAHH0SXIdCES2xpxkAl9wizB8GjVZ', // elektric park Festival 2021
+      'ADVbyXMtjr3umUY103RrhYzb7gM0RJYDP_77SBydXk1fk5DbocaZt8r1Q8MhB6kYXOlrj5O5kq3J', // Corse 2021
+      'ADVbyXML56pxbEtHmEinKsyvdYMpL-sSAJmjGKLyN0QHeshsXYWFZkiKBCSKRuMy9xVkFBj8zwNx', // Corse Selection
+      'ADVbyXOmTM0COliMw74AvUgiXFD6FyhRIMuCpGngBEQnNe_mseDR9sxyGgQJHvFVnBx1znip_L2t', // Eindhoven
+      'ADVbyXM_whFEBL5cXDvkt_i_dQv7zpuEHh78gtIMt9M-hE8QT_qjoVxF-v-2oDmJpRFnHIk4Csx-', // Soirée
+      'ADVbyXPJpOfTh9Teyua-KXiPs5sHtJes3L4zBztS0oxS8g7I9PFpvv7mpiGO2Rop9lQuLRX_JHzg', // Nice one
+      'ADVbyXNR4WYiv3c0fsef4TSASID88XjBz97TNFK2UoH02lDqi-raE8ffrKR7KeZ2t9s2mqc0Xs3C', // Provins
+      'ADVbyXM1A0cPPPiz0j5WjlRO0rYDNWAXGqlYPY36Al31MRySln476Lqcu6-myOHReJ67e_F5e5Bw', // ican
+      'ADVbyXOqUfWfqsyZnZHSlfM__EP809gtElFWzFrnBD0C7hfeBNF-S9BoyJvC2toRr8MInXEqAtj1', // berbeuc covid
+      'ADVbyXNBdHGmbiHfLiQ3nodDotr0Kc8lIB_BA0_KT_oH26uL_EAf2UhR6NtDrNyyP7_C5B17xWeL', // 1er Mai
+      'ADVbyXNopmQ1UMgHfuvNfPXtFl9tnB92bLI18qmJNphVLYoe-5JQiJI6b_CRPBYJvwIqJN18Vtvb', // Soirée chez Mathilde
+      'ADVbyXOxd_1QQr_yq5I-HOmW1j-blzTh1moSdXf6KV9QqENcFgKFKLscq9AURDe1vESud37FS-cr', // Maison Noisiel
+      'ADVbyXNrjBmjP0ilRVJYcT_6dBtEDk-FijJcxE9ZwbXw7rXlQ_82cxMJkh4OeDd9fWPkHa5Yax_e', // Soirée chez Adrien
+      'ADVbyXNidmfK2_2dWemINwBRYjKmAilk4kv8n28xNuG4PmNYtsXVsHCPC2S0o88eTd3ide_ALJXz', // Cadre Lola
+      'ADVbyXMsIJFr2Bk-TO7Bz0hsr1undXj39ONL9P7jdOwnqiZIB9KOHJXaTafcVuB7BZVb5FcOyLrg', // Anniv Élia
+      'ADVbyXOtSKU_AC9RjIF0XVe9EYN5FHYF6HHi5aj83kEWyvGDrOXBdy6rPbbBHvxsax-qBErBbDYb', // Rotterdam
+      'ADVbyXMgcJCLpYQk8Pk8V50_JCNAEibIWiXMzTuQmQFQQN3yWjebX6oSyHRrMbSElqwcoGOPo2hF', // Projet X
+      'ADVbyXPgXTrIv_eBtumc8TMPYqKLxYxXOx0yW8YT5lrk_b5BHs0mUr3_xySl02XK3iTY-gKw1KDz', // Hétic
+      'ADVbyXP9Zkr5ujMHnOT3iEvDgXoXuRv6ewKyRZ4iPJsrzEPVLDw-px-aK5Hr9nwbeohiibVdDAVs', // Reims
+      'ADVbyXMRPBmTMfRsv2i93nKM_1VYA3DRJtod5SRW-V8iEXDqRjzoLlWaSDnAQYVeq4Dlw1GPhGU5', // Anniv Lola 20 ans
+      'ADVbyXNPPOVyLzDpW8dcY62wyAFHY5w6KS3OLeKWXY2Zhv7LxOq7RErdDVAOY_1MmZgUSO-XJu_c', // Cadre photo
+      'ADVbyXOYje3jLS2zDCAZS5m572b5u5_vv-fJFxnrH0IH5aM7L4jjPRdYEkK9eoqO4MNnJsb_K5rM', // Anniversaire Alexandre
+      'ADVbyXMlBTtgaDwrU660dG9PY2VNDThNVSjIjs5PfMWpz4Uyiz7FBYrZ19HQXAyNaf59wH4bhreq', // La corse
+      'ADVbyXM1MyDgnWvO7h4PnHO93OkHLhxajwjZWNtXiZmtBDer3jRCfMXSxBq2fbDP24iIvh5nx4M-', // Corse
+      'ADVbyXOgYUC_IavfcwfnSAezEdVQuSzGN21Ctm4IqnEpg8Zkkx9JJDVVlG2JE_c2JQNmMzWjvDIz', // Amsterdam
+      'ADVbyXOnACEzRQiAK182MuXmIft6vCcmTQFpzs_YKuarepDB72TCOI2VFg2nOVSn8_ehF7UWPQaI', // Gand
+      'ADVbyXMqXBeLeRBvvzO4zB70hkzWUR1G57twg3DU792LAqGm08O7ctejoCHHBjsM1xAOt1zml5mn', // Soirée 15 juin
+      'ADVbyXPDMfLbgqShOwY3hJ-HuUMvOfpdyZbmMPlejE0mI9dy1QQk8IpyB-tNcv1qXdWrCwjl30z-', // Fontainebleau
+      'ADVbyXOvFcXYM4B5w1wNbDF76yI7Mbr2faNBhyzD7I7FlrrUvJ0y_qwTcSClf0L2azQDhVuL3Z3Q', // Anniv Momo
+      'ADVbyXO5aP4YYl7c1ciedhoBJ4q2cS60TRaS-RsTBorMqkryW-XnoF8JFyax6vcbRpLcNjlwgPiF', // Soirée chez Marine
+      'ADVbyXPEpPtT0cFA32wKaW9uKCOG758Hv2QbUIEpbNoHH6Y60Zx-Gv_O5KosmgNChPIpQXhNsAFa', // Ski Mars 2019
+      'ADVbyXPiTP6Z1c6_-9cV04q0tjOmAa6jWY5GAfBM5XNrBqFV-cwbgN3amN8_HXI1g_g4MK1a9To2', // 31 décembre 2018
+      'ADVbyXO3vrT3ncDFgdraWDmyxLAfem5lMF7sgk320uPG2msclKXKIhKC2eef6BPKw6xyIETSThnO', // Gilets jaunes
+      'ADVbyXN8H4PSMkRibVehb3iuiS18P7E6AUSjU-SqpwLXwoXs7GZGvKXYJAT2Fy_AcONM8KOS-b3s', // Anniv Lola
+      'ADVbyXOzZhF3yPPx9iQzi482QyMOwvoZcrmbLYetQ16FXh8bk9SfPzUGIx-qVyqzXE5tvGIuqTyy', // Mariage Justine
+    ];
+
+    function authenticate() {
+      return gapi.auth2.getAuthInstance()
+        .signIn({scope: SCOPES})
+        .then(() => gapi.client.setToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse(true)));
+    }
+
+    function loadClient() {
+      gapi.client.setApiKey('');
+      return gapi.client.load("https://photoslibrary.googleapis.com/$discovery/rest?version=v1");
+    }
+
+    function getAlbumInfo(albumId) {
+      return gapi.client.photoslibrary.albums.get({ albumId });
+    }
+
+    function getAlbumCover(albumId) {
+      // Récupère la première photo de l'album pour l'afficher comme couverture
+      return gapi.client.photoslibrary.mediaItems.search({
+        albumId: albumId,
+        pageSize: 1
+      });
+    }
+
+    async function displayAlbums() {
+      const container = document.getElementById('albums');
+      container.innerHTML = '';
+      for (let albumId of SELECTED_ALBUM_IDS) {
+        try {
+          const album = await getAlbumInfo(albumId);
+          const cover = await getAlbumCover(albumId);
+          const albumTitle = album.result.title || 'Sans titre';
+          const albumLink = 'https://photos.google.com/album/' + albumId;
+          const photoUrl = (cover.result.mediaItems && cover.result.mediaItems[0]) ?
+            cover.result.mediaItems[0].baseUrl + '=w400-h400' :
+            'https://via.placeholder.com/200?text=Album';
+
+          container.innerHTML += `
+            <div class="album">
+              <a href="${albumLink}" target="_blank">
+                <img src="${photoUrl}" alt="${albumTitle}">
+                <div>${albumTitle}</div>
+              </a>
+            </div>
+          `;
+        } catch (e) {
+          container.innerHTML += `<div class="album">Erreur pour l'album ${albumId}</div>`;
+        }
+      }
+    }
+
+    document.getElementById('login-btn').onclick = function() {
+      authenticate().then(displayAlbums);
+    };
+
+    // Chargement de l'API Google
+    function start() {
+      gapi.load('client:auth2', () => {
+        gapi.auth2.init({client_id: CLIENT_ID});
+      });
+    }
+  </script>
+  <script src="https://apis.google.com/js/api.js" onload="start()"></script>
+</body>
+</html>
