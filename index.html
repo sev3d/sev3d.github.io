@@ -306,10 +306,15 @@
       return await response.json();
     }
 
-    async function displayAlbums() {
+        // Paramètres
+    const PAGE_SIZE = 20; // Nombre d'albums chargés à chaque fois
+    let currentIndex = 0; // Où on en est dans la liste
+    
+    async function displayAlbumsBatch() {
       const container = document.getElementById('albums');
-      container.innerHTML = '';
-      for (let albumId of SELECTED_ALBUM_IDS) {
+      const nextAlbums = SELECTED_ALBUM_IDS.slice(currentIndex, currentIndex + PAGE_SIZE);
+    
+      for (let albumId of nextAlbums) {
         try {
           const album = await getAlbumInfo(albumId);
           const cover = await getAlbumCover(albumId);
@@ -319,7 +324,7 @@
             cover.mediaItems && cover.mediaItems[0]
               ? cover.mediaItems[0].baseUrl + '=w400-h400'
               : 'https://via.placeholder.com/200?text=Album';
-
+    
           container.innerHTML += `
             <div class="album">
               <a href="${albumLink}" target="_blank">
@@ -329,6 +334,21 @@
             </div>
           `;
         } catch (e) {
+          container.innerHTML += `<div class="album">Erreur pour l'album ${albumId}</div>`;
+        }
+      }
+      currentIndex += PAGE_SIZE;
+    }
+    
+    // Infinite scroll: charge plus d'albums quand on approche du bas
+    window.addEventListener('scroll', () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+        if (currentIndex < SELECTED_ALBUM_IDS.length) {
+          displayAlbumsBatch();
+        }
+      }
+    });
+    catch (e) {
           console.error(e);
           container.innerHTML += `<div class="album">Erreur pour l'album ${albumId}</div>`;
         }
