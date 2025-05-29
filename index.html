@@ -562,35 +562,37 @@
     let currentIndex = 0; // Index actuel dans la liste
 
     async function displayAlbumsBatch() {
-      const container = document.getElementById('albums');
-      const nextAlbums = SELECTED_ALBUM_IDS.slice(currentIndex, currentIndex + PAGE_SIZE);
+  const container = document.getElementById('albums');
+  const nextAlbums = SELECTED_ALBUM_IDS.slice(currentIndex, currentIndex + PAGE_SIZE);
 
-      for (let albumId of nextAlbums) {
-        try {
-          const album = await getAlbumInfo(albumId);
-          const cover = await getAlbumCover(albumId);
-          const albumTitle = album.title || 'Sans titre';
-          // Utilise le productUrl si connu, sinon fallback sur ancienne url
-          const albumProductUrl = ALBUM_PRODUCT_URLS[albumId] || ('https://photos.google.com/album/' + albumId);
-          const photoUrl =
-            cover.mediaItems && cover.mediaItems[0]
-              ? cover.mediaItems[0].baseUrl + '=w400-h400'
-              : 'https://via.placeholder.com/200?text=Album';
+  const albumPromises = nextAlbums.map(async (albumId) => {
+    try {
+      const album = await getAlbumInfo(albumId);
+      const cover = await getAlbumCover(albumId);
+      const albumTitle = album.title || 'Sans titre';
+      const albumProductUrl = ALBUM_PRODUCT_URLS[albumId] || ('https://photos.google.com/album/' + albumId);
+      const photoUrl =
+        cover.mediaItems && cover.mediaItems[0]
+          ? cover.mediaItems[0].baseUrl + '=w400-h400'
+          : 'https://via.placeholder.com/200?text=Album';
 
-          container.innerHTML += `
-            <div class="album">
-              <a href="${albumProductUrl}" target="_blank">
-                <img src="${photoUrl}" alt="${albumTitle}">
-                <div>${albumTitle}</div>
-              </a>
-            </div>
-          `;
-        } catch (e) {
-          container.innerHTML += `<div class="album">Erreur pour l'album ${albumId}</div>`;
-        }
-      }
-      currentIndex += PAGE_SIZE;
+      return `
+        <div class="album">
+          <a href="${albumProductUrl}" target="_blank">
+            <img src="${photoUrl}" alt="${albumTitle}">
+            <div>${albumTitle}</div>
+          </a>
+        </div>
+      `;
+    } catch (e) {
+      return `<div class="album">Erreur pour l'album ${albumId}</div>`;
     }
+  });
+
+  const renderedAlbums = await Promise.all(albumPromises);
+  container.innerHTML += renderedAlbums.join('');
+  currentIndex += PAGE_SIZE;
+}
 
     // Infinite scroll: charge plus d'albums quand on approche du bas
     window.addEventListener('scroll', () => {
