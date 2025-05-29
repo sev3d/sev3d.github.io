@@ -561,11 +561,43 @@
     const PAGE_SIZE = 10; // Nombre d'albums à charger à chaque fois
     let currentIndex = 0; // Index actuel dans la liste
 
-    async function displayAlbumsBatch() {
+    // ... tout le reste du code inchangé ...
+
+// Fonction utilitaire : lance les promesses 10 par 10
+async function promisePool(tasks, poolSize) {
+  let i = 0;
+  let results = [];
+  let running = 0;
+
+  return new Promise((resolve, reject) => {
+    function next() {
+      if (i === tasks.length && running === 0) {
+        resolve(results);
+        return;
+      }
+      while (running < poolSize && i < tasks.length) {
+        const current = i++;
+        running++;
+        tasks[current]()
+          .then(res => results[current] = res)
+          .catch(err => results[current] = err)
+          .finally(() => {
+            running--;
+            next();
+          });
+      }
+    }
+    next();
+  });
+}
+
+// Remplace displayAlbumsBatch par :
+async function displayAlbumsBatch() {
   const container = document.getElementById('albums');
   const nextAlbums = SELECTED_ALBUM_IDS.slice(currentIndex, currentIndex + PAGE_SIZE);
 
-  const albumPromises = nextAlbums.map(async (albumId) => {
+  // Crée une liste de fonctions qui retournent la promesse de génération d’un bloc album
+  const tasks = nextAlbums.map((albumId) => async () => {
     try {
       const album = await getAlbumInfo(albumId);
       const cover = await getAlbumCover(albumId);
@@ -589,7 +621,8 @@
     }
   });
 
-  const renderedAlbums = await Promise.all(albumPromises);
+  // Lance 10 promesses à la fois
+  const renderedAlbums = await promisePool(tasks, 10);
   container.innerHTML += renderedAlbums.join('');
   currentIndex += PAGE_SIZE;
 }
