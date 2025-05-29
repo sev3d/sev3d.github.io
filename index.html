@@ -604,23 +604,25 @@
 
     // Initialisation et gestion du bouton
     window.onload = function () {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: (response) => {
-          if (response.error) {
-            alert("Erreur OAuth : " + response.error);
-            return;
-          }
-          accessToken = response.access_token;
-          displayAlbums();
-        }
-      });
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (response) => {
+      if (response.error) {
+        alert("Erreur OAuth : " + response.error);
+        return;
+      }
+      accessToken = response.access_token;
+      currentIndex = 0;
+      document.getElementById('albums').innerHTML = '';
+      displayAlbumsBatch();
+    }
+  });
 
-      document.getElementById('login-btn').onclick = function () {
-        tokenClient.requestAccessToken();
-      };
-    };
+  document.getElementById('login-btn').onclick = function () {
+    tokenClient.requestAccessToken();
+  };
+};
   </script>
 </body>
 </html>
