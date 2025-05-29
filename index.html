@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com 'unsafe-inline'; connect-src 'self' https://photoslibrary.googleapis.com https://www.googleapis.com; img-src 'self' https://lh3.googleusercontent.com data: https://via.placeholder.com; style-src 'self' 'unsafe-inline'; frame-src https://accounts.google.com;">
+  <!-- Content Security Policy adaptée -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com https://apis.google.com https://www.gstatic.com 'unsafe-inline'; connect-src 'self' https://photoslibrary.googleapis.com https://www.googleapis.com; img-src 'self' https://lh3.googleusercontent.com data: https://via.placeholder.com; style-src 'self' 'unsafe-inline'; frame-src https://accounts.google.com;">
   <title>Afficher certains albums Google Photos</title>
   <style>
     .album { display: inline-block; margin: 20px; text-align: center; }
@@ -14,8 +15,9 @@
   <button id="login-btn">Se connecter à Google Photos</button>
   <div id="albums"></div>
 
+  <!-- GIS library -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    // Renseigne ici ton client_id Google Cloud
     const CLIENT_ID = '499061564187-gr1idc5pere5r74lspgcd3f8hcsaglps.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/photoslibrary.readonly';
 
@@ -272,27 +274,36 @@
       'ADVbyXOzZhF3yPPx9iQzi482QyMOwvoZcrmbLYetQ16FXh8bk9SfPzUGIx-qVyqzXE5tvGIuqTyy', // Mariage Justine
     ];
 
-    function authenticate() {
-      return gapi.auth2.getAuthInstance()
-        .signIn({scope: SCOPES})
-        .then(() => gapi.client.setToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse(true)));
+    let tokenClient;
+    let accessToken = null;
+
+    // Fonction pour récupérer les infos d'un album
+    async function getAlbumInfo(albumId) {
+      const response = await fetch(
+        `https://photoslibrary.googleapis.com/v1/albums/${albumId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+      if (!response.ok) throw new Error(await response.text());
+      return await response.json();
     }
 
-    function loadClient() {
-      gapi.client.setApiKey('');
-      return gapi.client.load("https://photoslibrary.googleapis.com/$discovery/rest?version=v1");
-    }
-
-    function getAlbumInfo(albumId) {
-      return gapi.client.photoslibrary.albums.get({ albumId });
-    }
-
-    function getAlbumCover(albumId) {
-      // Récupère la première photo de l'album pour l'afficher comme couverture
-      return gapi.client.photoslibrary.mediaItems.search({
-        albumId: albumId,
-        pageSize: 1
-      });
+    // Fonction pour récupérer la première image d'un album
+    async function getAlbumCover(albumId) {
+      const response = await fetch(
+        `https://photoslibrary.googleapis.com/v1/mediaItems:search`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ albumId: albumId, pageSize: 1 })
+        }
+      );
+      if (!response.ok) throw new Error(await response.text());
+      return await response.json();
     }
 
     async function displayAlbums() {
@@ -302,11 +313,12 @@
         try {
           const album = await getAlbumInfo(albumId);
           const cover = await getAlbumCover(albumId);
-          const albumTitle = album.result.title || 'Sans titre';
+          const albumTitle = album.title || 'Sans titre';
           const albumLink = 'https://photos.google.com/album/' + albumId;
-          const photoUrl = (cover.result.mediaItems && cover.result.mediaItems[0]) ?
-            cover.result.mediaItems[0].baseUrl + '=w400-h400' :
-            'https://via.placeholder.com/200?text=Album';
+          const photoUrl =
+            cover.mediaItems && cover.mediaItems[0]
+              ? cover.mediaItems[0].baseUrl + '=w400-h400'
+              : 'https://via.placeholder.com/200?text=Album';
 
           container.innerHTML += `
             <div class="album">
@@ -323,27 +335,25 @@
       }
     }
 
-    document.getElementById('login-btn').onclick = function() {
-  authenticate()
-    .then(loadClient)      // Ajoute ceci !
-    .then(displayAlbums);
-    .catch(e => {
-          if (e.error === "popup_closed_by_user") {
-            alert("Connexion annulée. Veuillez réessayer et autoriser la connexion Google.");
-          } else {
-            alert("Erreur OAuth : " + (e.details || e.error));
-            console.error(e);
+    // Initialisation et gestion du bouton
+    window.onload = function () {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (response) => {
+          if (response.error) {
+            alert("Erreur OAuth : " + response.error);
+            return;
           }
-        });
-    };
-
-    // Chargement de l'API Google
-    function start() {
-      gapi.load('client:auth2', () => {
-        gapi.auth2.init({client_id: CLIENT_ID});
+          accessToken = response.access_token;
+          displayAlbums();
+        }
       });
-    }
+
+      document.getElementById('login-btn').onclick = function () {
+        tokenClient.requestAccessToken();
+      };
+    };
   </script>
-  <script src="https://apis.google.com/js/api.js" onload="start()"></script>
 </body>
 </html>
