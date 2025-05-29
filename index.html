@@ -622,7 +622,7 @@ async function displayAlbumsBatch() {
   });
 
   // Lance 10 promesses à la fois
-  const renderedAlbums = await promisePool(tasks, 10);
+  const renderedAlbums = await promisePool(tasks, 30);
   container.innerHTML += renderedAlbums.join('');
   currentIndex += PAGE_SIZE;
 }
