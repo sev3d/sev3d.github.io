@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com 'unsafe-inline'; connect-src 'self' https://photoslibrary.googleapis.com https://www.googleapis.com; img-src 'self' https://lh3.googleusercontent.com data: https://via.placeholder.com; style-src 'self' 'unsafe-inline'; frame-src https://accounts.google.com;">
   <title>Afficher certains albums Google Photos</title>
   <style>
     .album { display: inline-block; margin: 20px; text-align: center; }
@@ -326,6 +327,14 @@
   authenticate()
     .then(loadClient)      // Ajoute ceci !
     .then(displayAlbums);
+    .catch(e => {
+          if (e.error === "popup_closed_by_user") {
+            alert("Connexion annulée. Veuillez réessayer et autoriser la connexion Google.");
+          } else {
+            alert("Erreur OAuth : " + (e.details || e.error));
+            console.error(e);
+          }
+        });
     };
 
     // Chargement de l'API Google
