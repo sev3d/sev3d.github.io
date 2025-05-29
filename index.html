@@ -555,7 +555,7 @@
       return await response.json();
     }
 
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 30;
     let currentIndex = 0;
     let isLoading = false;
 
@@ -616,7 +616,7 @@
         }
       });
 
-      const renderedAlbums = await promisePool(tasks, 20); // 10 requêtes en parallèle
+      const renderedAlbums = await promisePool(tasks, 30); // 10 requêtes en parallèle
       container.innerHTML += renderedAlbums.join('');
       currentIndex += PAGE_SIZE;
       isLoading = false;
