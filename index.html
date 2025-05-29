@@ -557,41 +557,41 @@
       return await response.json();
     }
 
-        // Paramètres
-    const PAGE_SIZE = 20; // Nombre d'albums chargés à chaque fois
-    let currentIndex = 0; // Où on en est dans la liste
-    
+    // Pagination et affichage
+    const PAGE_SIZE = 10; // Nombre d'albums à charger à chaque fois
+    let currentIndex = 0; // Index actuel dans la liste
+
     async function displayAlbumsBatch() {
-    const container = document.getElementById('albums');
-    const nextAlbums = SELECTED_ALBUM_IDS.slice(currentIndex, currentIndex + PAGE_SIZE);
-  
-    for (let albumId of nextAlbums) {
-      try {
-        const album = await getAlbumInfo(albumId);
-        const cover = await getAlbumCover(albumId);
-        const albumTitle = album.title || 'Sans titre';
-        // Utilise le productUrl si connu, sinon fallback sur ancienne url
-        const albumProductUrl = ALBUM_PRODUCT_URLS[albumId] || ('https://photos.google.com/album/' + albumId);
-        const photoUrl =
-          cover.mediaItems && cover.mediaItems[0]
-            ? cover.mediaItems[0].baseUrl + '=w400-h400'
-            : 'https://via.placeholder.com/200?text=Album';
-  
-        container.innerHTML += `
-          <div class="album">
-            <a href="${albumProductUrl}" target="_blank">
-              <img src="${photoUrl}" alt="${albumTitle}">
-              <div>${albumTitle}</div>
-            </a>
-          </div>
-        `;
-    } catch (e) {
-      container.innerHTML += `<div class="album">Erreur pour l'album ${albumId}</div>`;
+      const container = document.getElementById('albums');
+      const nextAlbums = SELECTED_ALBUM_IDS.slice(currentIndex, currentIndex + PAGE_SIZE);
+
+      for (let albumId of nextAlbums) {
+        try {
+          const album = await getAlbumInfo(albumId);
+          const cover = await getAlbumCover(albumId);
+          const albumTitle = album.title || 'Sans titre';
+          // Utilise le productUrl si connu, sinon fallback sur ancienne url
+          const albumProductUrl = ALBUM_PRODUCT_URLS[albumId] || ('https://photos.google.com/album/' + albumId);
+          const photoUrl =
+            cover.mediaItems && cover.mediaItems[0]
+              ? cover.mediaItems[0].baseUrl + '=w400-h400'
+              : 'https://via.placeholder.com/200?text=Album';
+
+          container.innerHTML += `
+            <div class="album">
+              <a href="${albumProductUrl}" target="_blank">
+                <img src="${photoUrl}" alt="${albumTitle}">
+                <div>${albumTitle}</div>
+              </a>
+            </div>
+          `;
+        } catch (e) {
+          container.innerHTML += `<div class="album">Erreur pour l'album ${albumId}</div>`;
+        }
+      }
+      currentIndex += PAGE_SIZE;
     }
-  }
-  currentIndex += PAGE_SIZE;
-}
-    
+
     // Infinite scroll: charge plus d'albums quand on approche du bas
     window.addEventListener('scroll', () => {
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
@@ -600,29 +600,28 @@
         }
       }
     });
-    
 
     // Initialisation et gestion du bouton
     window.onload = function () {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: (response) => {
-      if (response.error) {
-        alert("Erreur OAuth : " + response.error);
-        return;
-      }
-      accessToken = response.access_token;
-      currentIndex = 0;
-      document.getElementById('albums').innerHTML = '';
-      displayAlbumsBatch();
-    }
-  });
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (response) => {
+          if (response.error) {
+            alert("Erreur OAuth : " + response.error);
+            return;
+          }
+          accessToken = response.access_token;
+          currentIndex = 0;
+          document.getElementById('albums').innerHTML = '';
+          displayAlbumsBatch();
+        }
+      });
 
-  document.getElementById('login-btn').onclick = function () {
-    tokenClient.requestAccessToken();
-  };
-};
+      document.getElementById('login-btn').onclick = function () {
+        tokenClient.requestAccessToken();
+      };
+    };
   </script>
 </body>
 </html>
